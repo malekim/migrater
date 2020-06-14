@@ -16,10 +16,6 @@ func TestEnsureDir(t *testing.T) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		t.Errorf("EnsureDir did not create path for %s", dir)
 	}
-	// force error
-	if err := EnsureDir("~"); err == nil {
-		t.Errorf("EnsureDir should return error")
-	}
 
 	// clear after test
 	os.RemoveAll(dir)
