@@ -41,7 +41,7 @@ The above command will generate migration file inside app/migrations.
 
 ## Running migrations
 
-To run migrations you have to call code:
+To run migrations you have to call similar function:
 
 ```go
 package yourpackage
@@ -50,7 +50,10 @@ import (
   "github.com/malekim/migrater/pkg/migrater"
 )
 
-...
+//
+// some code
+//
+
 func RunMigrations(db *mongo.Database) {
   mig := migrater.NewMigrater()
   mig.SetMongoDatabase(db)
@@ -60,6 +63,12 @@ func RunMigrations(db *mongo.Database) {
   mig.Run()
 }
 ```
+
+## How it works
+
+When migrater creates a new migration, there are two methods to implement: up and down.
+
+Up method is called during migration. Down method is called during migrations rollback.
 
 ## Running tests
 
