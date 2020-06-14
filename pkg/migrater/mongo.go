@@ -12,7 +12,7 @@ import (
 var MongoStub string = `
 package migrations
 import (
-	"malekim/poligloo/internal/migrater"
+	"github.com/malekim/migrater/pkg/migrater"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
