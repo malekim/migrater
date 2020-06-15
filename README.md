@@ -73,6 +73,7 @@ Up method is called during migration. Down method is called during migrations ro
 
 ## Running tests
 
+Ensure that you have working mongo database and pass to test MONGO_HOST and MONGO_PORT:
 ```bash
-go test ./...
+MONGO_HOST=localhost && MONGO_PORT=27017 && go test -v -race -coverprofile=coverage.txt -covermode=atomic ./... &&  go tool cover -html=coverage.txt
 ```

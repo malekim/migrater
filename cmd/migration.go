@@ -14,13 +14,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func root(cmd *cobra.Command, args []string) error {
+	cmd.Help()
+	return fmt.Errorf("%s requires a subcommand", cmd.Name())
+}
+
 var migrationCmd = &cobra.Command{
 	Use:   "migration:generate",
 	Short: "Add migration file",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		cmd.Help()
-		return fmt.Errorf("%s requires a subcommand", cmd.Name())
-	},
+	RunE:  root,
 }
 
 func addMongoMigrationFile(cmd *cobra.Command, args []string) error {
@@ -58,7 +60,7 @@ func addMongoMigrationFile(cmd *cobra.Command, args []string) error {
 var mongoCmd = &cobra.Command{
 	Use:   "mongo",
 	Short: "Add mongo migration file",
-	RunE: addMongoMigrationFile,
+	RunE:  addMongoMigrationFile,
 }
 
 func init() {
