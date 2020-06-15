@@ -1,4 +1,4 @@
-# Migrater
+# Migrater [![codecov](https://codecov.io/gh/malekim/migrater/branch/master/graph/badge.svg)](https://codecov.io/gh/malekim/migrater)
 Migrater is a package to easily handle database migrations written in GO
 
 ## Install
@@ -47,6 +47,7 @@ To run migrations you have to call similar function:
 package yourpackage
 import (
   "yourpackage/app/migrations"
+  "go.mongodb.org/mongo-driver/mongo"
   "github.com/malekim/migrater/pkg/migrater"
 )
 
