@@ -6,12 +6,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func root(cmd *cobra.Command, args []string) {
+	cmd.Help()
+}
+
 var rootCmd = &cobra.Command{
 	Use:   "Migrater",
 	Short: "A package to handle migrations written in GO",
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
-	},
+	Run:   root,
 }
 
 func Execute() {

@@ -40,7 +40,6 @@ func (m *migrater) Run() {
 		if m.mongo.IsMigrated(migration.Timestamp) {
 			continue
 		}
-
 		err := migration.Up(m.mongo.db)
 		if err != nil {
 			log.Println(err.Error())

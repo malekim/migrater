@@ -8,13 +8,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func TestRoot(t *testing.T) {
+func TestMigrationRoot(t *testing.T) {
 	cmd := &cobra.Command{
 		Use:   "test",
 		Short: "Test command",
 	}
 	args := []string{}
-	err := root(cmd, args)
+	err := migrationRoot(cmd, args)
 	if err == nil {
 		t.Error("Expected root to return an error")
 	}
@@ -28,7 +28,7 @@ func TestAddMongoMigrationFile(t *testing.T) {
 	args := []string{}
 	err := addMongoMigrationFile(cmd, args)
 	if err != nil {
-		t.Error("Error during call addMongoMigrationFile")
+		t.Error("Error during call addMongoMigrationFile command")
 	}
 	// clean after test
 	dir := filepath.Join("app")
