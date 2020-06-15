@@ -12,6 +12,9 @@ jobs:
         image: mongo
         ports:
         - 27017:27017
+    env:
+      MONGO_HOST: localhost
+      MONGO_PORT: 27017
     steps:
     - name: Install Go
       uses: actions/setup-go@v2
