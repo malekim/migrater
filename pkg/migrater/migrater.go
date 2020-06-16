@@ -1,7 +1,6 @@
 package migrater
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -74,12 +73,12 @@ func (m *migrater) Rollback() error {
 			}
 			// increment counter
 			m.counter++
-
 			err = m.mongo.DeleteMigration(migration.Timestamp)
 			if err != nil {
 				return err
 			}
-			log.Println(fmt.Sprintf("Rollback migration %d (%s) succeded", migration.Timestamp, migration.Description))
+
+			log.Printf("Rollback migration %d (%s) succeded", migration.Timestamp, migration.Description)
 		}
 	}
 	if m.counter == 0 {
