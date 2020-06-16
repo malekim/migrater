@@ -149,11 +149,38 @@ func TestAddMongoMigrationFile(t *testing.T) {
 	}
 }
 
-func TestAddMongoMigrationFileError(t *testing.T) {
+func TestAddMongoMigrationFileEnsureDirError(t *testing.T) {
+	// test EnsureDir error
 	dir := filepath.Join("app")
 	// force error and create dir
 	// with chmod only to read
 	err := os.MkdirAll(dir, 0444)
+	if err != nil {
+		t.Error("Error during creating the directory")
+	}
+	err = AddMongoMigrationFile()
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	os.Chmod(dir, 0777)
+	// remove testing dir
+	err = os.RemoveAll(dir)
+	if err != nil {
+		t.Errorf("Unsuccessful clear %s", dir)
+	}
+}
+
+func TestAddMongoMigrationFileOpenFileError(t *testing.T) {
+	// test OpenFile error
+	dir := filepath.Join("app")
+	err := os.MkdirAll(dir, 0777)
+	if err != nil {
+		t.Error("Error during creating the directory")
+	}
+	// force error and create dir
+	// with chmod only to read
+	dir = filepath.Join("app", "migrations")
+	err = os.MkdirAll(dir, 0444)
 	if err != nil {
 		t.Error("Error during creating the directory")
 	}

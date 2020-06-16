@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
+	"bou.ke/monkey"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -168,6 +170,58 @@ func TestRunError(t *testing.T) {
 	db.Collection("migrations").DeleteMany(ctx, bson.D{})
 }
 
+func TestRunSaveMigrationError(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	// put index on Timestamp to force an error
+	collection := db.Collection("migrations")
+	collection.Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys: bson.M{
+				"Description": 1,
+			},
+			Options: options.Index().SetUnique(true),
+		},
+	)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(mig)
+	err := m.Run()
+	if err != nil {
+		t.Error(err.Error())
+	}
+	migWithDescriptionErr := MongoMigration{
+		Timestamp:   uint64(20060102150405),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(migWithDescriptionErr)
+	err = m.Run()
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	// drop migrations collection
+	collection.Drop(ctx)
+}
+
 func TestRollback(t *testing.T) {
 	m := NewMigrater()
 	ctx := context.Background()
@@ -223,5 +277,47 @@ func TestRollbackError(t *testing.T) {
 		t.Error("There should be an error")
 	}
 	// clear migrations table
+	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+}
+
+func TestRollbackDeleteMigrationError(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(mig)
+	// run migrations to have some data
+	err := m.Run()
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	// force an error
+	var c *mongo.Collection
+	var guard *monkey.PatchGuard
+	// note that during test there must be flag -gcflags=-l
+	guard = monkey.PatchInstanceMethod(reflect.TypeOf(c), "DeleteOne",
+		func(c *mongo.Collection, ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) (*mongo.DeleteResult, error) {
+			log.Printf("record: %+v, collection: %s, database: %s", filter, c.Name(), c.Database().Name())
+			return nil, errors.New("Test error")
+		})
+	defer guard.Unpatch()
+
+	err = m.Rollback()
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	// clear migrations
 	db.Collection("migrations").DeleteMany(ctx, bson.D{})
 }
