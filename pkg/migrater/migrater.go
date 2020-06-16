@@ -33,18 +33,16 @@ func (m *migrater) SetMongoDatabase(db *mongo.Database) {
 	m.mongo.db = db
 }
 
-func (m *migrater) Run() {
+func (m *migrater) Run() error {
 	// run mongo migrations
 	for _, migration := range m.mongo.migrations {
 		// check if migration was called before
 		if m.mongo.IsMigrated(migration.Timestamp) {
 			continue
 		}
-
 		err := migration.Up(m.mongo.db)
 		if err != nil {
-			log.Println(err.Error())
-			return
+			return err
 		}
 		// increment counter
 		m.counter++
@@ -56,39 +54,36 @@ func (m *migrater) Run() {
 		}
 		err = m.mongo.SaveMigration(en)
 		if err != nil {
-			log.Println(err.Error())
-			return
+			return err
 		}
-
-		log.Println(fmt.Sprintf("Migration %d (%s) succeded", migration.Timestamp, migration.Description))
+		log.Printf("Migration %d (%s) succeded", migration.Timestamp, migration.Description)
 	}
 	if m.counter == 0 {
 		log.Println("There was nothing to migrate")
 	}
+	return nil
 }
 
-func (m *migrater) Rollback() {
+func (m *migrater) Rollback() error {
 	for _, migration := range m.mongo.migrations {
 		// check if migration was called before
 		if m.mongo.IsMigrated(migration.Timestamp) {
 			err := migration.Down(m.mongo.db)
 			if err != nil {
-				log.Println(err.Error())
-				return
+				return err
 			}
 			// increment counter
 			m.counter++
 
 			err = m.mongo.DeleteMigration(migration.Timestamp)
 			if err != nil {
-				log.Println(err.Error())
-				return
+				return err
 			}
-
 			log.Println(fmt.Sprintf("Rollback migration %d (%s) succeded", migration.Timestamp, migration.Description))
 		}
 	}
 	if m.counter == 0 {
 		log.Println("There was nothing to rollback")
 	}
+	return nil
 }
