@@ -61,9 +61,43 @@ func RunMigrations(db *mongo.Database) {
   // after creating migration, you have to manually add here a corresponding file
   mig.AddMongoMigration(migrations.Migration1592085513)
   mig.AddMongoMigration(migrations.Migration1592085633)
-  mig.Run()
+  err := mig.Run()
+  if err != nil {
+    // handle err
+  }
 }
 ```
+
+## Rollback migrations
+
+To rollback migrations you have to call similar function:
+
+```go
+package yourpackage
+import (
+  "yourpackage/app/migrations"
+  "go.mongodb.org/mongo-driver/mongo"
+  "github.com/malekim/migrater/pkg/migrater"
+)
+
+//
+// some code
+//
+
+func RollbackMigrations(db *mongo.Database) {
+  mig := migrater.NewMigrater()
+  mig.SetMongoDatabase(db)
+  // after creating migration, you have to manually add here a corresponding file
+  mig.AddMongoMigration(migrations.Migration1592085513)
+  mig.AddMongoMigration(migrations.Migration1592085633)
+  err := mig.Rollback()
+  if err != nil {
+    // handle err
+  }
+}
+```
+
+Note that currently migrater rollbacks all performed migrations.
 
 ## How it works
 
