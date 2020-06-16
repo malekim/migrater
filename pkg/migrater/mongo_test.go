@@ -13,8 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func TestIsMigrated(t *testing.T) {
-	m := NewMigrater()
+func connectMongo(t *testing.T) *mongo.Database {
 	mongoURI := fmt.Sprintf("mongodb://%s:%s", os.Getenv("MONGO_HOST"), os.Getenv("MONGO_PORT"))
 	ctx := context.Background()
 	clientOpts := options.Client().ApplyURI(mongoURI)
@@ -22,7 +21,13 @@ func TestIsMigrated(t *testing.T) {
 	if err != nil {
 		t.Fatal("Unable to connect to Mongo")
 	}
-	db := client.Database("migrater")
+	return client.Database("migrater")
+}
+
+func TestIsMigrated(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
 	m.SetMongoDatabase(db)
 
 	mig := MongoMigration{
@@ -47,14 +52,8 @@ func TestIsMigrated(t *testing.T) {
 
 func TestSaveMigration(t *testing.T) {
 	m := NewMigrater()
-	mongoURI := fmt.Sprintf("mongodb://%s:%s", os.Getenv("MONGO_HOST"), os.Getenv("MONGO_PORT"))
 	ctx := context.Background()
-	clientOpts := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		t.Fatal("Unable to connect to Mongo")
-	}
-	db := client.Database("migrater")
+	db := connectMongo(t)
 	m.SetMongoDatabase(db)
 
 	mig := MongoMigration{
@@ -72,7 +71,7 @@ func TestSaveMigration(t *testing.T) {
 		Description: mig.Description,
 		Migrated:    time.Now(),
 	}
-	err = m.mongo.SaveMigration(en)
+	err := m.mongo.SaveMigration(en)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -87,14 +86,8 @@ func TestSaveMigration(t *testing.T) {
 
 func TestDeleteMigration(t *testing.T) {
 	m := NewMigrater()
-	mongoURI := fmt.Sprintf("mongodb://%s:%s", os.Getenv("MONGO_HOST"), os.Getenv("MONGO_PORT"))
 	ctx := context.Background()
-	clientOpts := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		t.Fatal("Unable to connect to Mongo")
-	}
-	db := client.Database("migrater")
+	db := connectMongo(t)
 	m.SetMongoDatabase(db)
 
 	mig := MongoMigration{
@@ -112,7 +105,7 @@ func TestDeleteMigration(t *testing.T) {
 		Description: mig.Description,
 		Migrated:    time.Now(),
 	}
-	err = m.mongo.SaveMigration(en)
+	err := m.mongo.SaveMigration(en)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -148,6 +141,25 @@ func TestAddMongoMigrationFile(t *testing.T) {
 	dir := filepath.Join("app")
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		t.Errorf("Dir %s should exist", dir)
+	}
+	// remove testing dir
+	err = os.RemoveAll(dir)
+	if err != nil {
+		t.Errorf("Unsuccessful clear %s", dir)
+	}
+}
+
+func TestAddMongoMigrationFileError(t *testing.T) {
+	dir := filepath.Join("app")
+	// force error and create dir
+	// with chmod only to read
+	err := os.MkdirAll(dir, 0444)
+	if err != nil {
+		t.Error("Error during creating the directory")
+	}
+	err = AddMongoMigrationFile()
+	if err == nil {
+		t.Error("There should be an error")
 	}
 	// remove testing dir
 	err = os.RemoveAll(dir)

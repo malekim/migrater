@@ -70,19 +70,13 @@ func (mgo *MongoMigrater) IsMigrated(timestamp uint64) bool {
 func (mgo *MongoMigrater) SaveMigration(en *MongoMigrationEntity) error {
 	collection := mgo.db.Collection("migrations")
 	_, err := collection.InsertOne(context.TODO(), en)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (mgo *MongoMigrater) DeleteMigration(timestamp uint64) error {
 	collection := mgo.db.Collection("migrations")
 	_, err := collection.DeleteOne(context.TODO(), bson.M{"timestamp": timestamp})
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func AddMongoMigrationFile() error {
@@ -108,10 +102,8 @@ func AddMongoMigrationFile() error {
 	}
 
 	err = t.Execute(f, vars)
-	if err != nil {
-		log.Println(err)
-		return err
+	if err == nil {
+		log.Printf("Created %s\n", name)
 	}
-	log.Printf("Created %s\n", name)
-	return nil
+	return err
 }

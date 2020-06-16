@@ -20,11 +20,7 @@ var migrationCmd = &cobra.Command{
 }
 
 func addMongoMigrationFile(cmd *cobra.Command, args []string) error {
-	err := migrater.AddMongoMigrationFile()
-	if err != nil {
-		return err
-	}
-	return nil
+	return migrater.AddMongoMigrationFile()
 }
 
 var mongoCmd = &cobra.Command{

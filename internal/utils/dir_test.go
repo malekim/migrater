@@ -20,3 +20,23 @@ func TestEnsureDir(t *testing.T) {
 	// clear after test
 	os.RemoveAll(dir)
 }
+
+func TestEnsureDirError(t *testing.T) {
+	dir := filepath.Join("tmptest")
+	// force error and create dir
+	// with chmod only to read
+	err := os.MkdirAll(dir, 0444)
+	if err != nil {
+		t.Error("Error during creating the directory")
+	}
+	file := filepath.Join("tmptest", "app", "test.txt")
+	err = EnsureDir(file)
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	// remove testing dir
+	err = os.RemoveAll(dir)
+	if err != nil {
+		t.Errorf("Unsuccessful clear %s", dir)
+	}
+}
