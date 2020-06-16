@@ -29,8 +29,14 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.txt
-    - name: Slack
-      uses: rtCamp/action-slack-notify@v2.0.2
-      env:
-        SLACK_CHANNEL: github
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification
+        uses: homoluctus/slatify@master
+        if: always()
+        with:
+          type: ${{ job.status }}
+          job_name: 'Github'
+          channel: '#github'
+          url: ${{ secrets.SLACK_WEBHOOK }}
