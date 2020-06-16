@@ -168,6 +168,58 @@ func TestRunError(t *testing.T) {
 	db.Collection("migrations").DeleteMany(ctx, bson.D{})
 }
 
+func TestRunSaveMigrationError(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	// put index on Timestamp to force an error
+	collection := db.Collection("migrations")
+	collection.Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys: bson.M{
+				"Description": 1,
+			},
+			Options: options.Index().SetUnique(true),
+		},
+	)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(mig)
+	err := m.Run()
+	if err != nil {
+		t.Error(err.Error())
+	}
+	migWithDescriptionErr := MongoMigration{
+		Timestamp:   uint64(20060102150405),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(migWithDescriptionErr)
+	err = m.Run()
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	// drop migrations collection
+	collection.Drop(ctx)
+}
+
 func TestRollback(t *testing.T) {
 	m := NewMigrater()
 	ctx := context.Background()
