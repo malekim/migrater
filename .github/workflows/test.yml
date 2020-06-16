@@ -29,3 +29,11 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.txt
+    - name: Slack Notification
+      uses: homoluctus/slatify@master
+      if: always()
+      with:
+        type: ${{ job.status }}
+        job_name: 'Github'
+        channel: '#github'
+        url: ${{ secrets.SLACK_WEBHOOK }}
