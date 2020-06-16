@@ -2,6 +2,7 @@ package migrater
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -143,6 +144,30 @@ func TestRunAndIsMigrated(t *testing.T) {
 	collection.DeleteMany(ctx, bson.D{})
 }
 
+func TestRunError(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return errors.New("Testing purpose error")
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(mig)
+	err := m.Run()
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+}
+
 func TestRollback(t *testing.T) {
 	m := NewMigrater()
 	ctx := context.Background()
@@ -169,6 +194,33 @@ func TestRollback(t *testing.T) {
 	m.Rollback()
 	if m.counter == 0 {
 		t.Fatal("Rollback counter should be set to", "1", "Got", m.counter)
+	}
+	// clear migrations table
+	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+}
+
+func TestRollbackError(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return errors.New("Testing purpose error")
+		},
+	}
+	m.AddMongoMigration(mig)
+	// run migrations to have some data
+	m.Run()
+	err := m.Rollback()
+	if err == nil {
+		t.Error("There should be an error")
 	}
 	// clear migrations table
 	db.Collection("migrations").DeleteMany(ctx, bson.D{})
