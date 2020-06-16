@@ -29,3 +29,8 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.txt
+    - name: Slack
+      uses: rtCamp/action-slack-notify@v2.0.2
+      env:
+        SLACK_CHANNEL: github
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
