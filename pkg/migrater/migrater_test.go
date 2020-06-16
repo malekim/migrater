@@ -77,14 +77,8 @@ func TestSetMongoDatabase(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	m := NewMigrater()
-	mongoURI := fmt.Sprintf("mongodb://%s:%s", os.Getenv("MONGO_HOST"), os.Getenv("MONGO_PORT"))
 	ctx := context.Background()
-	clientOpts := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		t.Fatal("Unable to connect to Mongo")
-	}
-	db := client.Database("migrater")
+	db := connectMongo(t)
 	m.SetMongoDatabase(db)
 
 	m.Run()
@@ -113,14 +107,8 @@ func TestRun(t *testing.T) {
 
 func TestRunAndIsMigrated(t *testing.T) {
 	m := NewMigrater()
-	mongoURI := fmt.Sprintf("mongodb://%s:%s", os.Getenv("MONGO_HOST"), os.Getenv("MONGO_PORT"))
 	ctx := context.Background()
-	clientOpts := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		t.Fatal("Unable to connect to Mongo")
-	}
-	db := client.Database("migrater")
+	db := connectMongo(t)
 	m.SetMongoDatabase(db)
 
 	mig := MongoMigration{
@@ -135,8 +123,9 @@ func TestRunAndIsMigrated(t *testing.T) {
 	}
 	m.AddMongoMigration(mig)
 	m.Run()
+	collection := db.Collection("migrations")
 	// check migrations count
-	count, err := db.Collection("migrations").CountDocuments(ctx, bson.D{})
+	count, err := collection.CountDocuments(ctx, bson.D{})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -151,19 +140,13 @@ func TestRunAndIsMigrated(t *testing.T) {
 		t.Fatal("Documents count in migrations collection should be", "1", "Got", count)
 	}
 	// clear migrations table
-	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+	collection.DeleteMany(ctx, bson.D{})
 }
 
 func TestRollback(t *testing.T) {
 	m := NewMigrater()
-	mongoURI := fmt.Sprintf("mongodb://%s:%s", os.Getenv("MONGO_HOST"), os.Getenv("MONGO_PORT"))
 	ctx := context.Background()
-	clientOpts := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		t.Fatal("Unable to connect to Mongo")
-	}
-	db := client.Database("migrater")
+	db := connectMongo(t)
 	m.SetMongoDatabase(db)
 
 	mig := MongoMigration{

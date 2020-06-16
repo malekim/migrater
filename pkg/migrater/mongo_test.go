@@ -81,7 +81,7 @@ func TestSaveMigration(t *testing.T) {
 		t.Fatal("Count migrations should return", 1, "Got", count)
 	}
 	// clear migrations table
-	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+	collection.DeleteMany(ctx, bson.D{})
 }
 
 func TestDeleteMigration(t *testing.T) {
@@ -129,7 +129,7 @@ func TestDeleteMigration(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	// clear migrations table
-	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+	collection.DeleteMany(ctx, bson.D{})
 }
 
 func TestAddMongoMigrationFile(t *testing.T) {
