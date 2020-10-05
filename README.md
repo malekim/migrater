@@ -103,7 +103,7 @@ Note that currently migrater rollbacks all performed migrations.
 
 When migrater creates a new migration, there are two methods to implement: up and down.
 
-Up method is called during migration. Down method is called during migrations rollback.
+Up method is called during migration. Down method is called during migration rollback.
 
 ## Running tests
 
