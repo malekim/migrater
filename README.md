@@ -149,7 +149,6 @@ Then you can call it like:
 go run ./main.go migrate down
 ```
 1. Rollback single migration
-
 ```bash
 go run ./main.go migrate down 1592085513
 ```
