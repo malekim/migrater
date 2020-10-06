@@ -66,6 +66,25 @@ func (m *migrater) Run() error {
 	return nil
 }
 
+func (m *migrater) Rollback(timestamps ...string) error {
+	err := m.reduceMigrations(timestamps...)
+	if err != nil {
+		return err
+	}
+
+	for _, migration := range m.mongo.migrations {
+		err := m.rollbackOne(migration)
+		if err != nil {
+			return err
+		}
+	}
+
+	if m.counter == 0 {
+		log.Println("There was nothing to rollback")
+	}
+	return nil
+}
+
 func (m *migrater) rollbackOne(migration MongoMigration) error {
 	if m.mongo.IsMigrated(migration.Timestamp) {
 		err := migration.Down(m.mongo.db)
@@ -101,24 +120,5 @@ func (m *migrater) reduceMigrations(timestamps ...string) error {
 
 	m.mongo.migrations = new
 
-	return nil
-}
-
-func (m *migrater) Rollback(timestamps ...string) error {
-	err := m.reduceMigrations(timestamps...)
-	if err != nil {
-		return err
-	}
-
-	for _, migration := range m.mongo.migrations {
-		err := m.rollbackOne(migration)
-		if err != nil {
-			return err
-		}
-	}
-
-	if m.counter == 0 {
-		log.Println("There was nothing to rollback")
-	}
 	return nil
 }
