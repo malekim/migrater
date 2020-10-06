@@ -93,9 +93,9 @@ func (m *migrater) reduceMigrations(timestamps ...string) error {
 	for _, t := range timestamps {
 		if migration, ok := m.mongo.migrations[t]; ok {
 			st := strconv.FormatUint(migration.Timestamp, 10)
-			m.mongo.migrations[st] = migration
+			new[st] = migration
 		} else {
-			return fmt.Errorf("Migration with timestamp: %s does not exist or has not been added to migrations map.", t)
+			return fmt.Errorf("Migration with timestamp: `%s` does not exist or has not been added to migrations map.", t)
 		}
 	}
 
