@@ -145,19 +145,15 @@ var migrateDownCmd = &cobra.Command{
 Then you can call it like:
 
 1. Rolback all migrations:
-
 ```bash
 go run ./main.go migrate down
 ```
-
 1. Rollback single migration
 
 ```bash
 go run ./main.go migrate down 1592085513
 ```
-
 1. Rollback multiple migrations
-
 ```bash
 go run ./main.go migrate down 1592085513 1592085633
 ```
