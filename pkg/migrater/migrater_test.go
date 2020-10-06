@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -245,6 +246,8 @@ func TestRollback(t *testing.T) {
 	m.AddMongoMigration(mig)
 	// run migrations to have some data
 	m.Run()
+	// reset counter
+	m.counter = 0
 	m.Rollback()
 	if m.counter == 0 {
 		t.Fatal("Rollback counter should be set to", "1", "Got", m.counter)
@@ -315,6 +318,86 @@ func TestRollbackDeleteMigrationError(t *testing.T) {
 	defer guard.Unpatch()
 
 	err = m.Rollback()
+	if err == nil {
+		t.Error("There should be an error")
+	}
+	// clear migrations
+	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+}
+
+func TestRollbackWithReduce(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	mig2 := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description second",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(mig)
+	m.AddMongoMigration(mig2)
+	// run migrations to have some data
+	err := m.Run()
+	if err != nil {
+		t.Error(err.Error())
+	}
+	// reset counter
+	m.counter = 0
+	// pass one argument to Rollback (uint converted to string)
+	err = m.Rollback(strconv.FormatUint(mig.Timestamp, 10))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if m.counter != 1 {
+		t.Fatal("Rollback counter should be set to", "1", "Got", m.counter)
+	}
+	// clear migrations
+	db.Collection("migrations").DeleteMany(ctx, bson.D{})
+}
+
+func TestRollbackWithReduceBadTimestampError(t *testing.T) {
+	m := NewMigrater()
+	ctx := context.Background()
+	db := connectMongo(t)
+	m.SetMongoDatabase(db)
+
+	mig := MongoMigration{
+		Timestamp:   uint64(time.Now().Unix()),
+		Description: "Your description",
+		Up: func(db *mongo.Database) error {
+			return nil
+		},
+		Down: func(db *mongo.Database) error {
+			return nil
+		},
+	}
+	m.AddMongoMigration(mig)
+	// run migrations to have some data
+	err := m.Run()
+	if err != nil {
+		t.Error(err.Error())
+	}
+	// reset counter
+	m.counter = 0
+	// pass one argument to Rollback (uint converted to string)
+	err = m.Rollback("bad_timestamp")
 	if err == nil {
 		t.Error("There should be an error")
 	}
