@@ -36,7 +36,7 @@ var Migration{{ .Timestamp }} migrater.MongoMigration = migrater.MongoMigration{
 
 type MongoMigrater struct {
 	counter    uint
-	migrations []MongoMigration
+	migrations map[string]MongoMigration
 	db         *mongo.Database
 }
 
@@ -54,6 +54,13 @@ type MongoMigrationEntity struct {
 	Timestamp   uint64             `json:"timestamp" bson:"timestamp"`
 	Description string             `json:"description" bson:"description"`
 	Migrated    time.Time          `json:"migrated" bson:"migrated"`
+}
+
+func NewMongoMigrater() *MongoMigrater {
+	return &MongoMigrater{
+		counter:    0,
+		migrations: make(map[string]MongoMigration),
+	}
 }
 
 func (mgo *MongoMigrater) IsMigrated(timestamp uint64) bool {

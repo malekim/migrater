@@ -1,7 +1,9 @@
 package migrater
 
 import (
+	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,12 +22,13 @@ type migrater struct {
 func NewMigrater() *migrater {
 	return &migrater{
 		counter: 0,
-		mongo:   &MongoMigrater{},
+		mongo:   NewMongoMigrater(),
 	}
 }
 
 func (m *migrater) AddMongoMigration(mgtn MongoMigration) {
-	m.mongo.migrations = append(m.mongo.migrations, mgtn)
+	st := strconv.FormatUint(mgtn.Timestamp, 10)
+	m.mongo.migrations[st] = mgtn
 }
 
 func (m *migrater) SetMongoDatabase(db *mongo.Database) {
@@ -63,26 +66,59 @@ func (m *migrater) Run() error {
 	return nil
 }
 
-func (m *migrater) Rollback() error {
-	for _, migration := range m.mongo.migrations {
-		// check if migration was called before
-		if m.mongo.IsMigrated(migration.Timestamp) {
-			err := migration.Down(m.mongo.db)
-			if err != nil {
-				return err
-			}
-			// increment counter
-			m.counter++
-			err = m.mongo.DeleteMigration(migration.Timestamp)
-			if err != nil {
-				return err
-			}
+func (m *migrater) Rollback(timestamps ...string) error {
+	err := m.reduceMigrations(timestamps...)
+	if err != nil {
+		return err
+	}
 
-			log.Printf("Rollback migration %d (%s) succeded", migration.Timestamp, migration.Description)
+	for _, migration := range m.mongo.migrations {
+		err := m.rollbackOne(migration)
+		if err != nil {
+			return err
 		}
 	}
+
 	if m.counter == 0 {
 		log.Println("There was nothing to rollback")
 	}
+	return nil
+}
+
+func (m *migrater) rollbackOne(migration MongoMigration) error {
+	if m.mongo.IsMigrated(migration.Timestamp) {
+		err := migration.Down(m.mongo.db)
+		if err != nil {
+			return err
+		}
+		// increment counter
+		m.counter++
+		err = m.mongo.DeleteMigration(migration.Timestamp)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("Rollback migration %d (%s) succeded", migration.Timestamp, migration.Description)
+	}
+	return nil
+}
+
+func (m *migrater) reduceMigrations(timestamps ...string) error {
+	if len(timestamps) == 0 {
+		return nil
+	}
+	new := make(map[string]MongoMigration)
+
+	for _, t := range timestamps {
+		if migration, ok := m.mongo.migrations[t]; ok {
+			st := strconv.FormatUint(migration.Timestamp, 10)
+			new[st] = migration
+		} else {
+			return fmt.Errorf("Migration with timestamp: `%s` does not exist or has not been added to migrations map.", t)
+		}
+	}
+
+	m.mongo.migrations = new
+
 	return nil
 }
